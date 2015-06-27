@@ -9,7 +9,7 @@
  * @package mod/logicgame
  */
 
-$module->version  = 2007040200;  // The current module version (Date: YYYYMMDDXX)
+$module->version  = 2015050203;  // The current module version (Date: YYYYMMDDXX)
 $module->requires = 2007101509;
 $module->cron     = 0;           // Period for cron to check this module (secs)
 

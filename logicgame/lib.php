@@ -1,7 +1,5 @@
 <?php 
 
-$logicgame_EXAMPLE_CONSTANT = 42; 
-
 function logicgame_add_instance($logicgame) {
 
     $logicgame->timecreated = time();
@@ -132,18 +130,9 @@ function logicgame_grade($logicgame, $userid, $response) {
 	$grades = array('userid'=>$userid, 'rawgrade'=>$grade);
     $params = array('itemname'=>$logicgame->name, 'idnumber'=>$logicgame->id);
 
-    if ( $logicgame->scale == 0) {
-        $params['gradetype'] = GRADE_TYPE_NONE;
-
-    } else if ($logicgame->scale > 0) {
-        $params['gradetype'] = GRADE_TYPE_VALUE;
-        $params['grademax']  = $logicgame->scale;
-        $params['grademin']  = -50;
-
-    } else if ($logicgame->scale < 0) {
-        $params['gradetype'] = GRADE_TYPE_SCALE;
-        $params['scaleid']   = -$logicgame->scale;
-    }
+    $params['gradetype'] = GRADE_TYPE_VALUE;
+    $params['grademax']  = 150;
+    $params['grademin']  = -50;
 
     if ($grades  === 'reset') {
         $params['reset'] = true;

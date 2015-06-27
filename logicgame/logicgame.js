@@ -7,12 +7,21 @@
 	tasksCountInGroup = 6;
 	
 $(function(){
-	currentHelp = sessionStorage.getItem('help') ? sessionStorage.getItem('help') : 0;
-	$.each(window.logicgame_response, function(index, elem){
+	currentHelp = window.logicgame_response.prompts ? +window.logicgame_response.prompts : 0;
+	$.each(window.logicgame_response.response, function(index, elem){
 		if(elem == 0){
 			if (index === 0){
-				$('#logicgameContent').load('./tasks/start.html');
+				$('#logicgameContent').load('./tasks/start.html', function(){
+					$('#startBtn').on('click', function(){
+						$('#gameModal').modal('show');
+					});
+				});
 				$('.control-container').css('visibility', 'hidden');
+				$('#gameModal').on('hidden.bs.modal', function () {
+					$(this).off('hidden.bs.modal');
+					changeTask();
+					showTaskModal();
+				})
 			} else {
 				step = index + 1;
 				changeTask();
@@ -26,39 +35,63 @@ $(function(){
 		}
 	});
 	$('#condition').on('click', function(){
-		showTaskModal('Закрыть');
+		showTaskModal();
 	});
 	$('#helpBtn').on('click', function(){
-		if (tasks[step-1].help.length > currentHelp) {
-			$('#btnModal').off('click');
-			showHelpModal();
-			currentHelp++;
-			sessionStorage.setItem('help', currentHelp);
-			$('#helpBtn').text('Подсказки (' + (tasks[step-1].help.length - currentHelp) + ')');
-		}
+		showHelpModal();
 	});
 });
 
-function showTaskModal (btnStr) {
+function showTaskModal () {
 	$('#gameModalLabel').text('Задача №' + step);
 	$('#gameModalBody').html(tasks[step-1].text);
-	$('#btnModal').text(btnStr);
-	if (btnStr === 'Далее') {
-		$('#btnModal').on('click', function(){
-			changeTask();
-		});
-	} else {
-		$('#btnModal').off('click');
-	}
+	$('#btnModal').text('Закрыть');
 	$('#gameModal').modal('show');
 };
 
 function showHelpModal () {
-	$('#gameModalLabel').text('Подсказка №' + (currentHelp + 1));
-	$('#gameModalBody').html(tasks[step-1].help[currentHelp]);
-	$('#btnModal').text('Закрыть');
-	$('#gameModal').modal('show');
+	var template,
+		panelGroup = $('#accordion').empty(),
+		innerHtml = $(),
+		title,
+		promptTitle;
+	$.each(tasks[step-1].help, function(index, prompt){
+		template = $($('#panelTemplate').html());
+		template.find('.title').text(refreshTitle(index)).data('index', index);
+		if(index >= currentHelp){
+			template.find('.panel-heading + div').collapse('hide');
+		}
+		template.find('.panel-body').text(prompt);
+		panelGroup.append(template);
+	});
+	panelGroup.find('.title').on('click', function(){
+		title = $(this);
+		if(title.data('index') == currentHelp){
+			title.closest('.panel-heading').next().collapse('show');
+			currentHelp++;
+			$.each(panelGroup.find('.title'), function(index, title){
+				$(title).text(refreshTitle(index));
+			});
+			$('#helpBtn').text('Подсказки (' + (tasks[step-1].help.length - currentHelp) + ')');
+			$.ajax({
+				method: "POST",
+				data: {'prompts': currentHelp }
+			});
+		}
+	});
+	$('#helpModal').modal('show');
 };
+
+function refreshTitle(index){
+	var promptTitle = 'Подсказка № ' + (index + 1);
+	if(index === currentHelp){
+		promptTitle += ' (-1 балл)';
+	}
+	if(index > currentHelp){
+		promptTitle += ' (недступно)';
+	}
+	return promptTitle;
+}
 
 function showInterimResults () {
 	$('#gameModalLabel').text('Промежуточные результаты');
@@ -68,7 +101,8 @@ function showInterimResults () {
 	$('#gameModal').on('hidden.bs.modal', function () {
 		$(this).off('hidden.bs.modal');
 		step++;
-		showTaskModal('Далее');
+		changeTask();
+		showTaskModal();
 	})
 };
 
@@ -97,7 +131,7 @@ function changeTask () {
 				
 				$.ajax({
 					method: "POST",
-					data: { 'step': step-1, 'score': scoreForTask }
+					data: { 'step': step-1, 'score': scoreForTask}
 				});
 				nextStep();
 			})
@@ -138,12 +172,17 @@ function checkAnswer(e){
 function nextStep(){
 	if(step < tasks.length){
 		currentHelp = 0;
+		$.ajax({
+			method: "POST",
+			data: {'prompts': currentHelp }
+		});
 		sessionStorage.setItem('help', 0);
 		if(step%tasksCountInGroup === 0){
 			showInterimResults();
 		} else {
 			step++;
-			showTaskModal('Далее');
+			changeTask();
+			showTaskModal();
 		}
 	} else {
 		setFinishPage();

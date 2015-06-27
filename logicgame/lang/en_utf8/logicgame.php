@@ -10,5 +10,6 @@ $string['logicgameintro'] = 'Logic puzzle Intro';
 $string['logicgamename'] = 'Logic puzzle Name';
 $string['userquery'] = 'Answer';
 $string['removeresponses'] = 'Remove responses';
+$string['username'] = 'Username';
 
 ?>

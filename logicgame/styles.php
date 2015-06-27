@@ -22,9 +22,13 @@ include "bootstrap.php"
 	border: 3px solid black;
 }
 
-.inherit-size{
+.mod-logicgame .inherit-size{
 	width: inherit;
 	height: inherit;
+}
+
+.mod-logicgame .modal-dialog{
+	margin-top: 100px;
 }
 
 .mod-logicgame .start-page{

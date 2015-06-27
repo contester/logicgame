@@ -23,10 +23,6 @@ class mod_logicgame_mod_form extends moodleform_mod {
 		$mform->addRule('instructions', get_string('required'), 'required', null, 'client');
 		$mform->setHelpButton('instructions', array('questions', 'richtext'), false, 'editorhelpbutton');
 
-		// Grading
-		$mform->addElement('modgrade', 'scale', get_string('grade'), false);
-		$mform->disabledIf('scale', 'assessed', 'eq', 0);
-
 		// Common module settings
 		$features = array('groups'=>true, 'groupings'=>true, 'groupmembersonly'=>true,
 						  'outcomes'=>false, 'gradecat'=>false, 'idnumber'=>false);

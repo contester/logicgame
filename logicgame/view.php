@@ -42,14 +42,39 @@ if (count($_POST)) {
 			add_to_log($course->id, "logicgame", "add response", "view.php?id=$cm->id", $logicgame->name, $cm->id);
 			
 			$response = new object();			
-			$response->response = array(
-				$_POST['step'] => $_POST['score'],
-			);
 			$response->logicgameid = $logicgame->id;
 			$response->userid = $USER->id;
 			$response->timemodified = time();
-			if ($old_response = get_record('logicgame_responses', 'logicgameid', $response->logicgameid, 'userid', $USER->id)) {
+						
+			if (array_key_exists('prompts', $_POST))
+			{
+				$response->usedpromptscount = $_POST['prompts'];
+				
+				if ($old_response = get_record('logicgame_responses', 'logicgameid', $response->logicgameid, 'userid', $USER->id)) {
 				$response->id = $old_response->id;
+				$response->response = $old_response->response;
+				
+				if(! update_record('logicgame_responses', $response)) {
+					echo get_string('errorupdateresponse','logicgame');
+				}
+			}
+			else { 
+				$newresponse = array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+				$response->response = implode(", ", $newresponse);
+			
+				if(!insert_record('logicgame_responses', $response)) echo get_string('errorinsertresponse','logicgame');
+			} 
+			}
+			
+			if (array_key_exists('step', $_POST))
+			{
+				$response->response = array(
+					$_POST['step'] => $_POST['score']
+				);
+				
+				if ($old_response = get_record('logicgame_responses', 'logicgameid', $response->logicgameid, 'userid', $USER->id)) {
+				$response->id = $old_response->id;
+				$response->usedpromptscount = $old_response->usedpromptscount;
 				$oldresponse = explode(", ", $old_response->response);
 				foreach($response->response as $key => $value) {
 					$oldresponse[(int)$key] = $value;
@@ -69,7 +94,8 @@ if (count($_POST)) {
 			$response->response = implode(", ", $newresponse);
 			
 	      	if(!insert_record('logicgame_responses', $response)) echo get_string('errorinsertresponse','logicgame');
-	      }      
+	      }    
+		}  
 		  // Set grades
 	    logicgame_grade($logicgame, $USER->id, explode(", ", $response->response));		  
 }
@@ -93,16 +119,18 @@ print_header_simple(format_string($logicgame->name), '', $navigation, '', '', tr
 
 $logicgame_response = get_record('logicgame_responses', 'logicgameid', $logicgame->id, 'userid', $USER->id);
 
+$responsewithprompts = new object();
+$responsewithprompts->prompts = $logicgame_response->usedpromptscount;
+
 if (!$logicgame_response) {
 	$logicgame_response = array(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
 } else {
 	$logicgame_response = explode(", ", $logicgame_response->response);
 }
 
-?>
+$responsewithprompts->response = $logicgame_response;
 
-<div style="margin: 45px 100px;">Большинство заданий содержит подсказки. Их количество может быть разным и указано на кнопке "Подсказки (n)". 
-За использование каждой подсказки снимается 1 балл. Если вы дали неправильный ответ на задачу, то также будет вычтен 1 балл.</div>
+?>
 
 <div class="logicgame-frame">
 	<div class="control-container">
@@ -112,7 +140,7 @@ if (!$logicgame_response) {
 	<div id="logicgameContent" class="inherit-size"></div>
 </div>
 
-<script>window.logicgame_response = <?php echo json_encode($logicgame_response)?>;</script>
+<script>window.logicgame_response = <?php echo json_encode($responsewithprompts)?>;</script>
 <script type="text/javascript" src="<?php echo $CFG->httpswwwroot ?>/mod/logicgame/jquery-2.1.3.min.js"></script>
 <script type="text/javascript" src="<?php echo $CFG->httpswwwroot ?>/mod/logicgame/bootstrap.min.js"></script>
 <script type="text/javascript" src="<?php echo $CFG->httpswwwroot ?>/mod/logicgame/tasks.js"></script>
@@ -125,18 +153,57 @@ if (!$logicgame_response) {
         <h4 class="modal-title" id="gameModalLabel"></h4>
       </div>
       <div class="modal-body">
-        <span id="gameModalBody"></span>
+        <div id="gameModalBody">
+			Большинство заданий содержит подсказки. На кнопке "Подсказки (n)" указано количество непросмотренных Вами. 
+			За использование каждой подсказки снимается 1 балл. Если вы дали неправильный ответ на задачу, то также будет вычтен 1 балл.
+		</div>
       </div>
       <div class="modal-footer">
-        <button type="button" id="btnModal" class="btn btn-default" data-dismiss="modal"></button>
+        <button type="button" id="btnModal" class="btn btn-default" data-dismiss="modal">Далее</button>
       </div>
     </div>
   </div>
+</div>
+
+<div class="modal fade" id="helpModal" tabindex="-1" role="dialog" aria-labelledby="helpModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title">Подсказки</h4>
+      </div>
+      <div class="modal-body">
+		<div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
+		  
+
+		</div>
+	  </div>
+      <div class="modal-footer">
+        <button type="button" id="btnModal" class="btn btn-default" data-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="panelTemplate" style="display: none;">
+	<div class="panel panel-default">
+		<div class="panel-heading" role="tab" id="headingOne">
+		  <h4 class="panel-title">
+			<a class="title" role="button" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+			</a>
+		  </h4>
+		</div>
+		<div id="collapseOne" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
+			<div class="panel-body"></div>
+		</div>
+	</div>
 </div>
 
 <?php
 /// Finish the page
 print_footer($course);
 ?>
+
+
+
 
 
