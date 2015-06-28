@@ -3,10 +3,35 @@
 require_once(dirname(dirname(dirname(__FILE__))).'/config.php');
 require_once(dirname(__FILE__).'/lib.php');
 
-$id = required_param('id', PARAM_INT);   // course
+$id = optional_param('id', 0, PARAM_INT); // course_module ID, or
+$a  = optional_param('a', 0, PARAM_INT);  // logicgame instance ID
 
-if (! $course = get_record('course', 'id', $USER->id)) {
-    error('Course ID is incorrect');
+if ($id) {
+    if (! $cm = get_coursemodule_from_id('logicgame', $id)) {
+        error('Course Module ID was incorrect');
+    }
+
+    if (! $course = get_record('course', 'id', $cm->course)) {
+        error('Course is misconfigured');
+    }
+
+    if (! $logicgame = get_record('logicgame', 'id', $cm->instance)) {
+        error('Course module is incorrect');
+    }
+
+} else if ($a) {
+    if (! $logicgame = get_record('logicgame', 'id', $a)) {
+        error('Course module is incorrect');
+    }
+    if (! $course = get_record('course', 'id', $logicgame->course)) {
+        error('Course is misconfigured');
+    }
+    if (! $cm = get_coursemodule_from_instance('logicgame', $logicgame->id, $course->id)) {
+        error('Course Module ID was incorrect');
+    }
+
+} else {
+    error('You must specify a course_module ID or an instance ID');
 }
 
 require_course_login($course);

@@ -24,6 +24,26 @@ $mod_logicgame_capabilities = array(
             'editingteacher' => CAP_ALLOW,
             'admin' => CAP_ALLOW
         )
+    ),
+	'mod/logicgame:grade' => array(
+        'riskbitmask' => RISK_SPAM,
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_MODULE,
+        'legacy' => array(
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'admin' => CAP_ALLOW
+        )
+    ),
+    'mod/logicgame:viewreports' => array(
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_MODULE,
+        'legacy' => array(
+            'teacher' => CAP_ALLOW,
+            'editingteacher' => CAP_ALLOW,
+            'admin' => CAP_ALLOW
+        )
     )
 );
 
