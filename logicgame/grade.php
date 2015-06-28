@@ -99,9 +99,9 @@ foreach ($responses as $response) {
 		$fa = "-";
 	}
 	
-	$currentuser = get_field('user', 'username', 'id', $response->userid);
+	$currentuser = get_field('user', 'firstname', 'id', $response->userid).' '.get_field('user', 'lastname', 'id', $response->userid);
 	
-	$table->data[] = array ($logicgames[$response->logicgameid - 1]->name, $currentuser, $fa);
+	$table->data[] = array ($logicgames[$response->logicgameid]->name, $currentuser, $fa);
 }
 
 //End Swapped	
